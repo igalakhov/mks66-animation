@@ -4,7 +4,6 @@
 
 #include "symbol_table.h"
 
-
 void SymbolTable::print() {
     int i;
     for (i = 0; i < lastsym; i++) {
@@ -36,16 +35,39 @@ void SymbolTable::print() {
     }
 }
 
+void SymbolTable::print_values(){
+    int i;
+    for (i = 0; i < lastsym; i++) {
+//        std::printf("Name: %s\n", symtab[i].name);
+//        std::printf("Type: %d\n", symtab[i].type);
+        switch (symtab[i].type) {
+            case SYM_VALUE:
+                std::printf(" [%s: %.2f] ", symtab[i].name, symtab[i].s.val);
+//                printf("Type: SYM_VALUE\n");
+//                printf("value: %6.2f\n", symtab[i].s.val);
+                break;
+            default:
+                break;
+        }
+    }
+    std::printf("\n");
+}
+
 SYMBOL *SymbolTable::add_symbol(const char *name, int type, void *data) {
 
     SYMBOL *t;
 
+//    std::printf("thing\n");
+
+
     t = (SYMBOL *) lookup_symbol(name);
     if (t == nullptr) {
+//        std::printf("thing 2\n");
+//        std::printf("%d\n", lastsym);
         if (lastsym >= MAX_SYMBOLS) {
             return nullptr;
         }
-        t = (SYMBOL *) &(symtab[lastsym]);
+        t = &(symtab[lastsym]);
         lastsym++;
     } else {
         return t;
@@ -54,6 +76,7 @@ SYMBOL *SymbolTable::add_symbol(const char *name, int type, void *data) {
     t->name = (char *) malloc(strlen(name) + 1);
     strcpy(t->name, name);
     t->type = type;
+
     switch (type) {
         case SYM_CONSTANTS:
             t->s.c = (struct constants *) data;
@@ -71,30 +94,29 @@ SYMBOL *SymbolTable::add_symbol(const char *name, int type, void *data) {
                 t->s.val = *((double *) data);
             break;
         }
-        case SYM_FILE:
-            break;
-
-        default:
+        default: // file or string
             break;
     }
+
     return (SYMBOL *) &(symtab[lastsym - 1]);
 
 }
 
 SYMBOL *SymbolTable::lookup_symbol(const char *name) {
+    //std::printf("%s\n", name);
     int i;
     for (i = 0; i < lastsym; i++) {
         if (!strcmp(name, symtab[i].name)) {
             return &(symtab[i]);
         }
     }
-    return (SYMBOL *) nullptr;
+    return nullptr;
 }
 
 // initalize
 SymbolTable::SymbolTable() {
     symtab = (SYMBOL *) std::malloc(MAX_SYMBOLS * sizeof(SYMBOL));
-
+    lastsym = 0;
 }
 
 // destruct

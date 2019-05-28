@@ -13,7 +13,7 @@ public:
     Display(); // constructor
     ~Display(); // destructor
 
-    void set(int, int, float_mat, struct color *); // set a pixel to a value
+    void set(float_mat, float_mat, float_mat, struct color *); // set a pixel to a value
     void clear();
 
 

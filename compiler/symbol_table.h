@@ -63,6 +63,7 @@ public:
     SYMBOL * lookup_symbol(const char *);
     SYMBOL * add_symbol(const char *, int, void *);
     void print();
+    void print_values();
 
 
 private:

@@ -696,6 +696,7 @@ BASENAME STRING
   lineno++;
   op[lastop].opcode = BASENAME;
   op[lastop].op.basename.p = s->add_symbol($2,SYM_STRING,0);
+
   lastop++;
 }|
 SAVE_KNOBS STRING
@@ -729,14 +730,26 @@ VARY STRING DOUBLE DOUBLE DOUBLE DOUBLE
 {
   lineno++;
   op[lastop].opcode = VARY;
-  op[lastop].op.vary.p = s->add_symbol($2,SYM_STRING,0);
+  op[lastop].op.vary.p = s->add_symbol($2,SYM_VALUE,0);
   op[lastop].op.vary.start_frame = $3;
   op[lastop].op.vary.end_frame = $4;
   op[lastop].op.vary.start_val = $5;
   op[lastop].op.vary.end_val = $6;
+  op[lastop].op.vary.easing = nullptr;
   lastop++;
 }|
-
+VARY STRING DOUBLE DOUBLE DOUBLE DOUBLE STRING
+{
+  lineno++;
+  op[lastop].opcode = VARY;
+  op[lastop].op.vary.p = s->add_symbol($2,SYM_VALUE,0);
+  op[lastop].op.vary.start_frame = $3;
+  op[lastop].op.vary.end_frame = $4;
+  op[lastop].op.vary.start_val = $5;
+  op[lastop].op.vary.end_val = $6;
+  op[lastop].op.vary.easing = $7;
+  lastop++;
+}|
 SHADING SHADING_TYPE
 {
   lineno++;

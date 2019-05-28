@@ -412,7 +412,7 @@ void Drawer::draw_line_simon(double x0d, double y0d, double z0, double x1d, doub
     set(x, y, z);
 }
 
-void Drawer::set(int x, int y, float_mat z){
+void Drawer::set(float_mat x, float_mat y, float_mat z) {
     if(x < IMAGE_WIDTH and x > 0 and y < IMAGE_HEIGHT and y > 0){ // only set if value is valid
         Display::set(x, y, z, &cur_color);
     }

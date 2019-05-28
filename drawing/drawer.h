@@ -34,7 +34,7 @@ public:
     void draw_line_shallow(int, int, float_mat, int, int, float_mat, int, int, int);
     void scan_line(float_mat *, float_mat *, float_mat *);
     void change_color(unsigned char, unsigned char, unsigned char);
-    void set(int, int, float_mat); // set a specific point to the current color
+    void set(float_mat, float_mat, float_mat); // set a specific point to the current color
 
 protected:
 

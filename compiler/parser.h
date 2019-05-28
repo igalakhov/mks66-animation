@@ -5,9 +5,6 @@
 #ifndef WORK_01_LINE_PARSER_H
 #define WORK_01_LINE_PARSER_H
 
-#ifndef PARSER_H
-#define PARSER_H
-
 #include "symbol_table.h"
 #include "../matrix/transformation_matrix.h"
 #include "../settings.h"
@@ -113,6 +110,7 @@ struct command
         struct {
             SYMBOL *p;
             double start_frame, end_frame, start_val, end_val;
+            char * easing;
         } vary;
         struct {
             SYMBOL *p;
@@ -134,6 +132,11 @@ extern struct command op[MAX_COMMANDS];
 
 void print_pcode();
 void my_main();
-#endif
+
+struct vary_node {
+    char * name;
+    double value;
+    struct vary_node *next;
+};
 
 #endif //WORK_01_LINE_PARSER_H

@@ -13,6 +13,9 @@ resources/
 renders/
 build/
 anim/
+*.gif
+.DS_Store
+
 
 # Prerequisites
 *.d

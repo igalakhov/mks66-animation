@@ -11,8 +11,228 @@
 #include "parsing/mdl/coordinate_stack.h"
 #include "drawing/3d/3d.h"
 #include "parsing/obj_parser.h"
+#include "drawing/easing.h"
+// "globals"
+
+
+
+// TODO: move this to parser.h
+static struct vary_node ** knobs;
+static std::string basename = "myanimation";
+static int num_frames = 1;
+static bool animate = 0;
+
+void first_pass();
+
+void second_pass();
+
+void third_pass();
+
+void render_frame(int);
+
 
 void my_main() {
+    first_pass();
+
+
+    if(num_frames > 1) {
+        std::printf("Generating animation with %d frames, with basename %s\n", num_frames, basename.c_str());
+        std::system("mkdir -p anim");
+        animate = true;
+    } else
+        std::printf("Generating single render\n");
+
+//    std::cout << basename << std::endl;
+//    std::cout << numframes << std::endl;
+
+    // with that being said, do a second pass
+    second_pass();
+
+    third_pass();
+
+
+    // print delta list
+//    for(int i = 0; i < num_frames; i++){
+//        std::printf("Frame %d: ", i);
+//        struct vary_node * cur = knobs[i];
+//        while(cur != nullptr){
+//            std::printf("[%s (%f)]", cur->name, cur->value);
+//            cur = cur->next;
+//        }
+//        std::printf("\n");
+//    }
+
+
+    // convert to a gif if necessary
+    if(num_frames > 1){
+        // frame conversion code here
+        std::system(("convert -delay 1.7 anim/" + basename + "* " + basename + ".gif").c_str());
+        std::system("rm -rf anim");
+        std::system(("animate " + basename + ".gif").c_str());
+
+    }
+
+    //s->print();
+
+
+
+}
+
+void third_pass(){
+    for(int frame = 0; frame < num_frames; frame++){
+        std::printf("Generating Frame #%d\n", frame);
+
+        // update symbol table
+        struct vary_node * cur = knobs[frame];
+        while(cur != nullptr){
+//            printf("??\n");
+            s->lookup_symbol(cur->name)->s.val = cur->value;
+            cur = cur->next;
+        }
+        s->print_values();
+
+        // actually render
+        render_frame(frame);
+
+    }
+}
+
+void add_value(vary_node **knobs, int frame, char *name, double delta){
+    if(frame < 0 or frame >= num_frames) // don't do anything for invalid frames
+        return;
+
+    assert(0 <= frame and frame < num_frames); // so we don't get a weird null pointer
+    vary_node * cur = knobs[frame];
+
+    // new node
+    auto new_node = (struct vary_node * ) malloc(sizeof(struct vary_node));
+
+    new_node->name = name;
+    new_node->next = nullptr;
+    new_node->value = delta;
+
+    if(cur == nullptr) {
+        knobs[frame] = new_node;
+    } else {
+        while (cur->next != nullptr)
+            cur = cur->next;
+        cur->next = new_node;
+    }
+
+}
+
+void second_pass(){
+    knobs = (struct vary_node **)calloc((size_t) num_frames, sizeof(struct vary_node *));
+    // set all knobs to null
+    for(int i = 0; i < num_frames; i++)
+        knobs[i] = nullptr;
+
+    // look for vary commands
+    for (int i = 0; i < lastop; i++) {
+
+        //std::cout << "yes" << std::endl;
+
+        //printf("%d: \n", i);
+        struct command cur = op[i];
+        switch (cur.opcode) {
+
+            case VARY: {
+//                std::printf("%s: frame %d to %d, vary %d to %d\n", cur.op.vary.p->name,
+//                            (int) std::round(cur.op.vary.start_frame),
+//                            (int) std::round(cur.op.vary.end_frame),
+//                            (int) std::round(cur.op.vary.start_val),
+//                            (int) std::round(cur.op.vary.end_val));
+
+                assert(cur.op.vary.start_frame != cur.op.vary.end_frame); // no weird errors
+
+                double delta = (cur.op.vary.end_val - cur.op.vary.start_val)/(cur.op.vary.end_frame - cur.op.vary.start_frame);
+
+                int t = 0;
+                double b = cur.op.vary.start_val;
+                double c = cur.op.vary.end_val - cur.op.vary.start_val;
+                double d = cur.op.vary.end_frame - cur.op.vary.start_frame;
+
+//                std::cout << "HELLO" << std::endl;
+
+                //std::printf("%d, %d\n", (int)std::round(cur.op.vary.start_frame) + 1, (int)std::round(cur.op.vary.end_frame));
+
+                double prev = cur.op.vary.start_val;
+
+                // figure out which function we need
+                int easing_function = SINE_IN;
+
+                for(int j = (int)std::round(cur.op.vary.start_frame); j <= (int)std::round(cur.op.vary.end_frame); j++){
+
+                    //std::printf("%d ", j);
+                    //add_value(knobs, j, cur.op.vary.p->name, delta);
+
+                    //std::printf("t: %d, b: %f, c: %f, d: %f\n", t, b, c, d);
+
+
+                    // calculate value
+
+                    double val = Sine::easeInOut(t, b, c, d);
+
+//                    std::printf("val: %f\n", val);
+////                    std::printf("prev: %f\n", prev);
+//                    std::printf("change: %f\n", prev - val);
+
+                    add_value(knobs, j, cur.op.vary.p->name, val);
+
+                    prev = val;
+
+                    t++;
+                }
+
+                //std::printf("%f\n", delta);
+
+                // set the knob default
+
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+    }
+
+
+
+}
+
+void first_pass() {
+    // find the basename and number of frames commands
+    for (int i = 0; i < lastop; i++) {
+
+        //std::cout << "yes" << std::endl;
+
+        //printf("%d: \n", i);
+        struct command cur = op[i];
+        switch (cur.opcode) {
+
+            case BASENAME: {
+                basename = cur.op.basename.p->name;
+                break;
+            }
+
+            case FRAMES: {
+                num_frames = (int) std::round(cur.op.frames.num_frames);
+                break;
+            }
+
+            default: {
+                break;
+            }
+        }
+
+    }
+
+}
+
+
+void render_frame(int frame) {
     // set up
     auto cord_stack = new CoordinateStack();
 
@@ -111,7 +331,7 @@ void my_main() {
                 if (cur.op.sphere.cs != nullptr) {
                     //s->lookup_symbol(cur.op.sphere.cs->name)->s.m->print_self();
                     triangle_matrix->apply_transformation(s->lookup_symbol(cur.op.sphere.cs->name)->s.m);
-                }else
+                } else
                     triangle_matrix->apply_transformation(cord_stack->peek());
                 if (cur.op.sphere.constants != nullptr)
                     drawer->draw_polygons(triangle_matrix, light_sources, &ambient, cur.op.sphere.constants->s.c);
@@ -129,7 +349,7 @@ void my_main() {
                                cur.op.line.p1[0],
                                cur.op.line.p1[1],
                                cur.op.line.p1[2]
-                        );
+                );
 
                 temp->apply_transformation(cord_stack->peek());
 
@@ -141,24 +361,31 @@ void my_main() {
 
                 // stacks and transformations
             case MOVE: {
+                double delta = 1;
+                if(cur.op.move.p != nullptr)
+                    delta = cur.op.move.p->s.val;
                 cord_stack->apply_transformation(TransformationMatrix::translation(
-                        cur.op.move.d[0],
-                        cur.op.move.d[1],
-                        cur.op.move.d[2]
+                        cur.op.move.d[0] * delta,
+                        cur.op.move.d[1] * delta,
+                        cur.op.move.d[2] * delta
                 ));
                 break;
             }
 
             case ROTATE: {
+                double delta = 1;
+                if(cur.op.rotate.p != nullptr)
+                    delta = cur.op.rotate.p->s.val;
+
                 switch ((int) std::round(cur.op.rotate.axis)) {
                     case 0:
-                        cord_stack->apply_transformation(TransformationMatrix::rotationX(cur.op.rotate.degrees));
+                        cord_stack->apply_transformation(TransformationMatrix::rotationX(cur.op.rotate.degrees * delta));
                         break;
                     case 1:
-                        cord_stack->apply_transformation(TransformationMatrix::rotationY(cur.op.rotate.degrees));
+                        cord_stack->apply_transformation(TransformationMatrix::rotationY(cur.op.rotate.degrees * delta));
                         break;
                     case 2:
-                        cord_stack->apply_transformation(TransformationMatrix::rotationZ(cur.op.rotate.degrees));
+                        cord_stack->apply_transformation(TransformationMatrix::rotationZ(cur.op.rotate.degrees * delta));
                         break;
                     default:
                         break;
@@ -167,10 +394,14 @@ void my_main() {
             }
 
             case SCALE: {
+                double delta = 1;
+                if(cur.op.scale.p != nullptr)
+                    delta = cur.op.scale.p->s.val;
+
                 cord_stack->apply_transformation(TransformationMatrix::dilation(
-                        cur.op.scale.d[0],
-                        cur.op.scale.d[1],
-                        cur.op.scale.d[2]
+                        cur.op.scale.d[0] * delta,
+                        cur.op.scale.d[1] * delta,
+                        cur.op.scale.d[2] * delta
                 ));
                 break;
             }
@@ -228,17 +459,20 @@ void my_main() {
             }
 
             case DISPLAY: {
-                drawer->display();
+                if(!animate)
+                    drawer->display();
                 break;
             }
 
             case SAVE: {
-
                 drawer->save(cur.op.save.p->name, "dummy");
                 break;
             }
 
                 // stuff we don't need to do anything for since the parser and lexer do it for us
+            case VARY:
+            case BASENAME:
+            case FRAMES:
             case CONSTANTS:
                 break;
 
@@ -265,20 +499,13 @@ void my_main() {
             }
         }
     }
+
+    // save the drawer after we ran all our commands
+    char buff[100];
+    snprintf(buff, sizeof(buff), "%06d", frame);
+    std::string buffAsStdStr = buff;
+    //std::cout << "anim/" + basename + "" + buffAsStdStr + ".png" << std::endl;
+
+    drawer->save("anim/" + basename + "" + buffAsStdStr + ".png", "dummy");
 }
 
-void first_pass(){
-    // find the basename and number of frames commands
-
-}
-
-void second_pass(){
-    // establish deltas for the symbol table
-
-}
-
-void third_pass(){
-    // actually animate everything yurr
-
-
-}

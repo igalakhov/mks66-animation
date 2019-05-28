@@ -3,7 +3,7 @@ OBJECTS=$(BUILD_FOLDER)/main.o $(BUILD_FOLDER)/drawer.o $(BUILD_FOLDER)/display.
 	$(BUILD_FOLDER)/transformation_matrix.o $(BUILD_FOLDER)/mdl_parser.o $(BUILD_FOLDER)/obj_parser.o \
 	$(BUILD_FOLDER)/parametric.o $(BUILD_FOLDER)/3d.o $(BUILD_FOLDER)/unit_matrix.o $(BUILD_FOLDER)/triangle_matrix.o \
 	$(BUILD_FOLDER)/point_matrix.o $(BUILD_FOLDER)/vector_utils.o $(BUILD_FOLDER)/coordinate_stack.o $(BUILD_FOLDER)/lighting.o \
-	$(BUILD_FOLDER)/settings.o $(BUILD_FOLDER)/symbol_table.o $(BUILD_FOLDER)/parser.o
+	$(BUILD_FOLDER)/settings.o $(BUILD_FOLDER)/symbol_table.o $(BUILD_FOLDER)/parser.o $(BUILD_FOLDER)/easing.o
 
 
 all: prepare $(BUILD_FOLDER)/bison_parser.o $(BUILD_FOLDER)/flex_lexer.o $(OBJECTS)
@@ -78,6 +78,10 @@ $(BUILD_FOLDER)/symbol_table.o: compiler/symbol_table.cpp settings.h
 
 $(BUILD_FOLDER)/parser.o: compiler/parser.cpp settings.h
 	g++ -std=c++11 -o $(BUILD_FOLDER)/parser.o -c compiler/parser.cpp
+
+$(BUILD_FOLDER)/easing.o: drawing/easing.cpp settings.h
+	g++ -std=c++11 -o $(BUILD_FOLDER)/easing.o -c drawing/easing.cpp
+
 
 remake-build:
 	rm -rf build/
