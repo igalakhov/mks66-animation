@@ -18,7 +18,7 @@
 
 // TODO: move this to parser.h
 static struct vary_node ** knobs;
-static std::string basename = "myanimation";
+static std::string my_basename = "myanimation";
 static int num_frames = 1;
 static bool animate = 0;
 
@@ -36,7 +36,7 @@ void my_main() {
 
 
     if(num_frames > 1) {
-        std::printf("Generating animation with %d frames, with basename %s\n", num_frames, basename.c_str());
+        std::printf("Generating animation with %d frames, with basename %s\n", num_frames, my_basename.c_str());
         std::system("mkdir -p anim");
         animate = true;
     } else
@@ -66,9 +66,9 @@ void my_main() {
     // convert to a gif if necessary
     if(num_frames > 1){
         // frame conversion code here
-        std::system(("convert -delay 1.7 anim/" + basename + "* " + basename + ".gif").c_str());
+        std::system(("convert -delay 1.7 anim/" + my_basename + "* " + my_basename + ".gif").c_str());
         std::system("rm -rf anim");
-        std::system(("animate " + basename + ".gif").c_str());
+        std::system(("animate " + my_basename + ".gif").c_str());
 
     }
 
@@ -213,7 +213,9 @@ void first_pass() {
         switch (cur.opcode) {
 
             case BASENAME: {
-                basename = cur.op.basename.p->name;
+		//std::printf("%s\n", cur.op.basename.p->name);
+		//exit(0);
+                my_basename = std::string(cur.op.basename.p->name);
                 break;
             }
 
@@ -506,6 +508,6 @@ void render_frame(int frame) {
     std::string buffAsStdStr = buff;
     //std::cout << "anim/" + basename + "" + buffAsStdStr + ".png" << std::endl;
 
-    drawer->save("anim/" + basename + "" + buffAsStdStr + ".png", "dummy");
+    drawer->save("anim/" + my_basename + "" + buffAsStdStr + ".png", "dummy");
 }
 
